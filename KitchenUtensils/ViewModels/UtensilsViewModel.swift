@@ -21,10 +21,9 @@ final class UtensilsViewModel: ObservableObject {
 
     func add(name: String, image: UIImage) {
         do {
-            let filename = try Persistence.saveImage(image)
-            let new = Utensil(name: name, photoFilename: filename)
+            let new = try repo.add(name: name, image: image)
             items.append(new)
-            try Persistence.saveItems(items)
+            try repo.saveAll(items)
         } catch {
             errorMessage = "Failed to save. Please try again."
         }
@@ -33,17 +32,17 @@ final class UtensilsViewModel: ObservableObject {
     func delete(at offsets: IndexSet) {
         let toDelete = offsets.map { items[$0] }
         items.remove(atOffsets: offsets)
-        toDelete.forEach { Persistence.deleteImage(named: $0.photoFilename) }
-        try? Persistence.saveItems(items)
+        repo.delete(toDelete)
+        try? repo.saveAll(items)
     }
 
     func rename(_ item: Utensil, to newName: String) {
         guard let idx = items.firstIndex(of: item) else { return }
         items[idx].name = newName
-        try? Persistence.saveItems(items)
+        try? repo.saveAll(items)
     }
 
     func image(for item: Utensil) -> UIImage? {
-        Persistence.loadImage(named: item.photoFilename)
+        repo.image(for: item)
     }
 }
